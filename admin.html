@@ -1,59 +1,61 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel | Free Vector Stock</title>
+    <title>Bulk Upload Panel</title>
     <style>
-        body { background: #0f0f0f; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .upload-box { background: #1a1a1a; padding: 40px; border-radius: 20px; border: 2px solid #f39c12; width: 380px; text-align: center; }
+        body { background: #000; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .box { background: #111; padding: 40px; border-radius: 20px; border: 2px solid #f39c12; width: 450px; text-align: center; }
         h2 { color: #f39c12; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #252525; color: white; box-sizing: border-box; }
-        .btn { background: #f39c12; color: #000; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 15px; }
-        #status { margin-top: 20px; font-size: 14px; color: #f39c12; }
+        input[type="password"] { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #222; color: white; box-sizing: border-box; }
+        .btn-sel { background: #222; color: #f39c12; padding: 10px; border-radius: 6px; cursor: pointer; display: block; margin: 15px 0; border: 1px dashed #f39c12; width: 100%; font-weight: bold; }
+        .btn-up { background: #27ae60; color: #fff; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; width: 100%; font-size: 16px; }
+        #log { margin-top: 20px; font-size: 12px; text-align: left; max-height: 150px; overflow-y: auto; color: #aaa; border-top: 1px solid #222; padding-top: 10px; }
     </style>
 </head>
 <body>
-    <div class="upload-box">
-        <h2>Vektör Yükle</h2>
-        <input type="text" id="token" placeholder="GitHub Token (ghp_...)" />
-        <input type="text" id="title" placeholder="Tasarım Adı" />
-        <input type="file" id="fileInput" multiple />
-        <button class="btn" onclick="uploadToGithub()">SİSTEME GÖNDER</button>
-        <div id="status"></div>
+    <div class="box">
+        <h2>BULK UPLOAD</h2>
+        <input type="password" id="token" placeholder="GitHub Token (ghp_...)">
+        <input type="file" id="files" multiple accept=".jpg,.jpeg,.eps" style="display: none;" onchange="document.getElementById('st').innerText = this.files.length + ' files selected.'">
+        <button class="btn-sel" onclick="document.getElementById('files').click()">SELECT JPG & EPS FILES</button>
+        <div id="st" style="color:#f39c12; margin-bottom:10px;"></div>
+        <button class="btn-up" onclick="start()">START UPLOAD</button>
+        <div id="log"></div>
     </div>
-
     <script>
-        async function uploadToGithub() {
-            const token = document.getElementById('token').value;
-            const title = document.getElementById('title').value.trim().replace(/\s+/g, '-').toLowerCase();
-            const files = document.getElementById('fileInput').files;
-            const status = document.getElementById('status');
-
-            if (!token || !title || files.length < 2) {
-                status.innerText = "❌ Eksik bilgi veya dosya!";
-                return;
+        async function start() {
+            const tk = document.getElementById('token').value.trim();
+            const fls = Array.from(document.getElementById('files').files);
+            const lg = document.getElementById('log');
+            if(!tk || fls.length === 0) { alert("Token/Files missing!"); return; }
+            lg.innerHTML = "Starting...<br>";
+            const jpgs = fls.filter(f => f.name.toLowerCase().endsWith('.jpg') || f.name.toLowerCase().endsWith('.jpeg'));
+            for (let j of jpgs) {
+                const name = j.name.split('.')[0];
+                const folder = name.toLowerCase().replace(/\s+/g, '-');
+                const e = fls.find(f => f.name.split('.')[0] === name && f.name.toLowerCase().endsWith('.eps'));
+                if (e) {
+                    lg.innerHTML += `Folder: ${folder}`;
+                    const r1 = await up(j, folder, tk);
+                    const r2 = await up(e, folder, tk);
+                    lg.innerHTML += (r1 && r2) ? ` - ✅<br>` : ` - ❌ (Check Token)<br>`;
+                }
             }
-
-            status.innerText = "⏳ Yükleniyor...";
-            const OWNER = 'free-vector-stock';
-            const REPO = 'free-vector-stock';
-
-            for (let file of files) {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = async () => {
-                    const content = reader.result.split(',')[1];
-                    const path = `vectors/${title}/${file.name}`;
-                    
-                    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`, {
-                        method: 'PUT',
-                        headers: { 'Authorization': `token ${token}` },
-                        body: JSON.stringify({ message: `Upload: ${title}`, content: content })
+            lg.innerHTML += "Finished!";
+        }
+        async function up(f, fld, tk) {
+            const r = new FileReader(); r.readAsDataURL(f);
+            return new Promise(res => { r.onload = async () => {
+                const c = r.result.split(',')[1];
+                try {
+                    const resp = await fetch(`https://api.github.com/repos/free-vector-stock/free-vector-stock/contents/vectors/${fld}/${f.name}`, {
+                        method: 'PUT', headers: { 'Authorization': `token ${tk}` },
+                        body: JSON.stringify({ message: `Add ${fld}`, content: c })
                     });
-
-                    status.innerText = res.ok ? "✅ Başarıyla yüklendi!" : "❌ Hata!";
-                };
-            }
+                    res(resp.ok);
+                } catch { res(false); }
+            };});
         }
     </script>
 </body>
