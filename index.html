@@ -1,80 +1,141 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Free Vector Stock</title>
+    <title>Free Vector Stock | Premium Assets</title>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; padding: 0; text-align: center; }
-        header { padding: 40px; background: #111; border-bottom: 2px solid #f39c12; }
-        h1 { color: #f39c12; margin: 0; letter-spacing: 3px; }
-        .search-box { margin: 30px; }
-        #searchInput { padding: 12px 20px; width: 300px; border-radius: 20px; border: 1px solid #f39c12; background: #111; color: #fff; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; padding: 20px; max-width: 1200px; margin: auto; }
-        .card { background: #111; padding: 15px; border-radius: 10px; border: 1px solid #222; }
-        .card img { width: 100%; height: 180px; object-fit: contain; background: #000; border-radius: 5px; }
-        .card h3 { font-size: 14px; margin: 15px 0; color: #ccc; }
-        .btn { display: block; background: #f39c12; color: #000; padding: 10px; text-decoration: none; border-radius: 5px; font-weight: bold; }
-        .pagination { margin: 40px; display: flex; justify-content: center; gap: 10px; }
-        .p-btn { padding: 10px 15px; background: #111; border: 1px solid #f39c12; color: #fff; cursor: pointer; border-radius: 5px; }
-        .p-btn.active { background: #f39c12; color: #000; }
+        /* Modern Dark Theme */
+        body { background: #000; color: #fff; font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; }
+        header { padding: 50px 20px; text-align: center; background: linear-gradient(to bottom, #111, #000); border-bottom: 2px solid #f39c12; }
+        h1 { color: #f39c12; margin: 0; letter-spacing: 4px; font-size: 2.8em; text-transform: uppercase; }
+        
+        /* Search Section */
+        .search-area { text-align: center; margin: 35px 20px; }
+        #searchInput { 
+            padding: 15px 25px; width: 100%; max-width: 600px; border-radius: 35px; 
+            border: 2px solid #333; background: #111; color: #fff; outline: none; font-size: 16px;
+            transition: 0.3s;
+        }
+        #searchInput:focus { border-color: #f39c12; box-shadow: 0 0 15px rgba(243, 156, 18, 0.3); }
+
+        /* Gallery Grid */
+        .grid { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+            gap: 30px; padding: 20px; max-width: 1300px; margin: auto; 
+        }
+
+        /* Vector Card Design */
+        .card { 
+            background: #0d0d0d; border: 1px solid #222; border-radius: 15px; 
+            padding: 20px; text-align: center; transition: 0.3s ease-in-out; 
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .card:hover { border-color: #f39c12; transform: translateY(-8px); }
+        .card img { width: 100%; height: 220px; object-fit: contain; background: #050505; border-radius: 10px; margin-bottom: 20px; }
+        .card h3 { font-size: 15px; margin: 10px 0; color: #ddd; text-transform: uppercase; letter-spacing: 1px; min-height: 40px; }
+        
+        /* Buttons */
+        .btn { 
+            display: block; background: #f39c12; color: #000; padding: 12px; 
+            text-decoration: none; border-radius: 8px; font-weight: bold; transition: 0.3s;
+            margin-top: 10px;
+        }
+        .btn:hover { background: #ffb133; transform: scale(1.02); }
+
+        /* Pagination Buttons (1, 2, 3...) */
+        .pagination { margin: 60px 20px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; }
+        .p-btn { 
+            padding: 12px 20px; background: #111; border: 1px solid #444; 
+            color: #fff; cursor: pointer; border-radius: 8px; font-weight: bold; transition: 0.2s;
+        }
+        .p-btn:hover { border-color: #f39c12; color: #f39c12; }
+        .p-btn.active { background: #f39c12; color: #000; border-color: #f39c12; }
+
+        /* Empty Search State */
+        .no-results { text-align: center; padding: 50px; color: #666; font-style: italic; }
     </style>
 </head>
 <body>
 
-<header><h1>FREE VECTOR STOCK</h1></header>
+<header>
+    <h1>FREE VECTOR STOCK</h1>
+</header>
 
-<div class="search-box">
-    <input type="text" id="searchInput" placeholder="Tasarım ara...">
+<div class="search-area">
+    <input type="text" id="searchInput" placeholder="Type to search... (e.g. Pizza, Burger, Fast Food)">
 </div>
 
 <div id="vectorGrid" class="grid"></div>
 <div id="pagination" class="pagination"></div>
 
 <script>
-    let allData = [];
-    let filteredData = [];
+    let rawData = [];
+    let filtered = [];
     let page = 1;
-    const limit = 12;
+    const limit = 12; // Items per page
 
-    // Verileri çek
-    fetch('vectors.json').then(r => r.json()).then(data => {
-        allData = data;
-        filteredData = data;
-        render();
-    });
+    // 1. Fetch data from vectors.json
+    fetch('vectors.json')
+        .then(res => res.json())
+        .then(data => {
+            rawData = data;
+            filtered = data;
+            draw();
+        })
+        .catch(err => {
+            console.error("Error: vectors.json not found!");
+            document.getElementById('vectorGrid').innerHTML = "<p class='no-results'>Error loading vectors.json</p>";
+        });
 
-    function render() {
+    // 2. Render Gallery Function
+    function draw() {
         const grid = document.getElementById('vectorGrid');
         const pag = document.getElementById('pagination');
         grid.innerHTML = ""; pag.innerHTML = "";
 
-        const start = (page - 1) * limit;
-        const pageItems = filteredData.slice(start, start + limit);
+        if (filtered.length === 0) {
+            grid.innerHTML = "<div class='no-results'>No vectors found matching your search.</div>";
+            return;
+        }
 
-        pageItems.forEach(name => {
+        const start = (page - 1) * limit;
+        const slice = filtered.slice(start, start + limit);
+
+        slice.forEach(name => {
             const folder = name.trim();
+            // Path logic compatible with your "Fixer" tool: vectors/folder/folder.jpg
             grid.innerHTML += `
                 <div class="card">
-                    <img src="vectors/${folder}/${folder}.jpg" onerror="this.src='https://via.placeholder.com/250x180?text=Yukleniyor...'">
-                    <h3>${folder}</h3>
+                    <img src="vectors/${folder}/${folder}.jpg" alt="${folder}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x220?text=Preview+Coming+Soon'">
+                    <h3>${folder.replace(/-/g, ' ')}</h3>
                     <a href="vectors/${folder}/${folder}.eps" class="btn" download>DOWNLOAD EPS</a>
                 </div>`;
         });
 
-        const totalPages = Math.ceil(filteredData.length / limit);
-        for(let i=1; i<=totalPages; i++) {
-            const b = document.createElement('button');
-            b.innerText = i;
-            b.className = (i === page) ? 'p-btn active' : 'p-btn';
-            b.onclick = () => { page = i; render(); window.scrollTo(0,0); };
-            pag.appendChild(b);
+        // 3. Create Pagination Logic
+        const total = Math.ceil(filtered.length / limit);
+        if(total > 1) {
+            for(let i=1; i<=total; i++) {
+                const b = document.createElement('button');
+                b.innerText = i;
+                b.className = (i === page) ? 'p-btn active' : 'p-btn';
+                b.onclick = () => { 
+                    page = i; 
+                    draw(); 
+                    window.scrollTo({top: 0, behavior: 'smooth'}); 
+                };
+                pag.appendChild(b);
+            }
         }
     }
 
+    // 4. Real-time Search Logic
     document.getElementById('searchInput').oninput = (e) => {
-        filteredData = allData.filter(v => v.toLowerCase().includes(e.target.value.toLowerCase()));
-        page = 1; render();
+        const val = e.target.value.toLowerCase().trim();
+        filtered = rawData.filter(v => v.toLowerCase().includes(val));
+        page = 1; // Reset to page 1 on search
+        draw();
     };
 </script>
 </body>
