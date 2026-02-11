@@ -2,11 +2,11 @@
 <html lang="tr">
 <head><meta charset="UTF-8"><title>Admin | Free Vector Stock</title></head>
 <body style="background:#111; color:#fff; font-family:sans-serif; text-align:center; padding-top:50px;">
-    <h2>VEKTÖR YÜKLE</h2>
+    <h2 style="color:#f39c12">VEKTÖR YÜKLE</h2>
     <input type="text" id="token" placeholder="GitHub Token" style="padding:10px; width:300px;"><br><br>
     <input type="text" id="title" placeholder="Tasarım Adı" style="padding:10px; width:300px;"><br><br>
     <input type="file" id="files" multiple style="color:#fff;"><br><br>
-    <button onclick="upload()" style="background:#f39c12; padding:10px 40px; font-weight:bold; cursor:pointer;">SİSTEME GÖNDER</button>
+    <button onclick="upload()" style="background:#f39c12; padding:10px 40px; font-weight:bold; cursor:pointer; border:none; border-radius:5px;">SİSTEME GÖNDER</button>
     <div id="status" style="margin-top:20px;"></div>
     <script>
         async function upload() {
@@ -25,7 +25,7 @@
                         headers: { 'Authorization': `token ${token}` },
                         body: JSON.stringify({ message: 'upload', content: content })
                     });
-                    status.innerText = res.ok ? "✅ Yüklendi!" : "❌ Hata!";
+                    status.innerText = res.ok ? "✅ Başarıyla yüklendi!" : "❌ Hata oluştu!";
                 };
             }
         }
