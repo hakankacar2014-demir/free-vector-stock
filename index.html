@@ -1,43 +1,46 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <title>Free Vector Stock | Ücretsiz Vektör Arşivi</title>
-    <style>
-        body { background: #000; color: #fff; font-family: sans-serif; text-align: center; padding: 50px; }
-        h1 { color: #f39c12; font-size: 3.5rem; text-transform: uppercase; }
-        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; max-width: 1000px; margin: 40px auto; }
-        .card { background: #111; border: 1px solid #333; padding: 15px; border-radius: 10px; }
-        .card img { width: 100%; border-radius: 5px; }
-        .btn { background: #f39c12; color: #000; padding: 10px; text-decoration: none; display: block; margin-top: 10px; font-weight: bold; border-radius: 5px; }
-    </style>
-</head>
-<body>
-    <h1>FREE VECTOR STOCK</h1>
-    <p>Ücretsiz ve Yüksek Kaliteli Vektör Mağazası</p>
-    <div class="container" id="gallery"></div>
-    <script>
-        const OWNER = 'hakankacar2014-demir';
-        const REPO = 'free-vector-stock';
-        async function load() {
+<script>
+    const OWNER = 'hakankacar2014-demir';
+    const REPO = 'free-vector-stock';
+
+    async function load() {
+        const gallery = document.getElementById('gallery');
+        try {
             const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/vectors`);
             const dirs = await res.json();
+            
             for(let d of dirs) {
                 if(d.type === 'dir') {
                     const fRes = await fetch(d.url);
                     const files = await fRes.json();
-                    const jpg = files.find(f => f.name.endsWith('.jpg')).download_url;
-                    const eps = files.find(f => f.name.endsWith('.eps')).download_url;
-                    document.getElementById('gallery').innerHTML += `
+                    const jpg = files.find(f => f.name.toLowerCase().endsWith('.jpg')).download_url;
+                    const eps = files.find(f => f.name.toLowerCase().endsWith('.eps')).download_url;
+                    
+                    const card = `
                         <div class="card">
                             <img src="${jpg}">
-                            <p>${d.name}</p>
-                            <a href="${eps}" class="btn" download>EPS İNDİR</a>
+                            <p>${d.name.replace(/-/g, ' ').toUpperCase()}</p>
+                            <button class="btn" onclick="forceDownload('${eps}', '${d.name}.eps')">EPS İNDİR</button>
                         </div>`;
+                    gallery.innerHTML += card;
                 }
             }
-        }
-        load();
-    </script>
-</body>
-</html>
+        } catch(e) { console.log("Yükleme hatası:", e); }
+    }
+
+    // Dosyayı kod olarak açmak yerine bilgisayara indiren sihirli fonksiyon
+    function forceDownload(url, filename) {
+        fetch(url)
+            .then(response => response.blob())
+            .then(blob => {
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            })
+            .catch(e => console.error('İndirme hatası:', e));
+    }
+
+    load();
+</script>
