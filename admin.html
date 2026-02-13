@@ -2,224 +2,154 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>AI SMART UPLOAD SYSTEM | PRO CATEGORY VERSION</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel - FREE VECTOR STOCK</title>
 <style>
-body{background:#0a0a0a;color:#eee;font-family:'Segoe UI',Arial,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
-.box{background:#111;padding:35px;border-radius:15px;border:2px solid #f39c12;width:560px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
-h2{color:#f39c12;text-align:center;margin-top:0;letter-spacing:2px;text-transform:uppercase;font-size:20px}
-input,textarea{width:100%;padding:12px;margin:10px 0;border-radius:6px;border:1px solid #333;background:#1a1a1a;color:#fff;box-sizing:border-box;outline:none}
-button{width:100%;padding:15px;background:#27ae60;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:16px;transition:.3s;margin-top:10px}
-button:hover{background:#2ecc71}
-#log{margin-top:15px;font-size:11px;color:#aaa;text-align:left;max-height:200px;overflow-y:auto;padding:12px;background:#000;border-radius:5px;border:1px solid #222}
+body{font-family:Arial;background:#0d0d0d;color:#fff;padding:30px;}
+input,button{padding:10px;margin:10px 0;width:100%;}
+button{background:#f39c12;border:none;cursor:pointer;font-weight:bold;}
+button:hover{opacity:0.85;}
+.log{margin-top:20px;background:#111;padding:15px;border-radius:8px;font-size:14px;}
 </style>
 </head>
 <body>
 
-<div class="box">
-<h2>SISTEM OTOMATIK YUKLEME v3.0</h2>
-<input type="password" id="tk" placeholder="GitHub Personal Access Token">
-<input type="file" id="fi" multiple accept=".jpg,.eps">
-<textarea id="desc" rows="3" placeholder="Aciklama bos kalirsa otomatik premium aciklama eklenir"></textarea>
-<button id="btn" onclick="startProcess()">DOSYALARI ISLE VE YUKLE</button>
-<div id="log">Sistem hazir. Akilli kategori motoru aktif.</div>
-</div>
+<h2>FREE VECTOR STOCK - ADMIN PANEL</h2>
+
+<input type="text" id="github-user" placeholder="GitHub Username">
+<input type="text" id="github-repo" placeholder="Repository Name">
+<input type="text" id="github-token" placeholder="GitHub Token">
+<input type="text" id="image-url" placeholder="Image URL (uploads/file.jpg)">
+<input type="text" id="title" placeholder="Vector Title">
+
+<button onclick="uploadVector()">UPLOAD VECTOR</button>
+
+<div class="log" id="log"></div>
 
 <script>
 
-/* =========================
-   CATEGORY KEYWORD DATABASE
-========================= */
-
-const catKeywords = {
-abstract:"abstract,background,pattern,texture,modern,artistic,colorful,geometric,wave,line,futuristic,minimal,creative,composition,element,digital,gradient,flow,concept,visual,shape",
-animals:"animal,pet,wild,nature,mammal,bird,cat,dog,lion,tiger,wildlife,fauna,creature,cute,adorable,safari,jungle,forest,habitat",
-business:"business,corporate,office,finance,marketing,strategy,management,career,company,meeting,growth,success,team,analytics,economy",
-education:"education,school,learning,student,teacher,university,study,knowledge,classroom,library,college,science,graduation",
-food:"food,meal,dish,healthy,organic,delicious,tasty,nutrition,cooking,restaurant,gourmet,menu,breakfast,lunch,dinner",
-nature:"nature,landscape,outdoor,environment,sky,mountain,forest,tree,water,river,lake,flower,garden,eco,earth",
-people:"people,person,human,character,portrait,family,community,social,lifestyle,group,happy,activity",
-technology:"technology,digital,innovation,computer,software,internet,network,ai,virtual,data,cloud,cyber,robot,modern",
-sports:"sport,fitness,training,athlete,gym,exercise,competition,football,basketball,tennis,running,workout",
-vintage:"vintage,retro,classic,old,antique,nostalgic,ornament,decorative,heritage,history"
+const categories = {
+Business:["business","corporate","finance","office","marketing","startup","analytics","strategy"],
+Technology:["technology","digital","ai","data","computer","software","network","cyber"],
+Medical:["medical","health","doctor","hospital","medicine","clinic","nurse","pharmacy"],
+Nature:["nature","tree","forest","eco","leaf","green","wildlife","environment"],
+Sport:["sport","fitness","football","basketball","soccer","gym","training","athlete"],
+Education:["education","school","learning","study","university","book","teacher"],
+Travel:["travel","vacation","tourism","flight","hotel","journey","map"],
+Food:["food","restaurant","meal","drink","coffee","fruit","vegetable"],
+Fashion:["fashion","clothing","style","model","trend","outfit"],
+Music:["music","instrument","song","audio","sound","guitar","piano"],
+Abstract:["abstract","background","shape","pattern","modern","creative"],
+Social:["social","media","network","communication","chat","community"],
+RealEstate:["real estate","house","home","property","building","apartment"],
+Animals:["animal","dog","cat","wildlife","pet","bird"],
+Holiday:["holiday","christmas","halloween","new year","celebration"]
 };
 
-const genericPool = [
-"vector","illustration","graphic","design","isolated","eps",
-"flat-design","clip-art","digital-art","stock","premium",
-"commercial","high-quality","professional","template",
-"modern","creative","background","icon","symbol","element",
-"web","print","collection","resource","visual","unique",
-"download","artwork","file","editable"
+const genericPool=[
+"vector","design","graphic","illustration","icon","template","background",
+"collection","set","isolated","logo","banner","poster","branding",
+"print","web","ui","pack","art","symbol","minimal","flat",
+"colorful","editable","eps","svg","png","jpg","download","premium",
+"modern","creative","element","clipart","stock","high quality"
 ];
 
-/* =========================
-   START PROCESS
-========================= */
+function log(msg){
+document.getElementById("log").innerHTML+=msg+"<br>";
+}
 
-async function startProcess(){
+function detectCategory(title){
+const lower=title.toLowerCase();
+for(const cat in categories){
+for(const word of categories[cat]){
+if(lower.includes(word)) return cat;
+}
+}
+return "Abstract";
+}
 
-const token=document.getElementById('tk').value.trim();
-const files=Array.from(document.getElementById('fi').files);
-const globalDesc=document.getElementById('desc').value.trim();
-const log=document.getElementById('log');
+function generateKeywords(title,category){
+let pool=[...genericPool,...categories[category]];
+const titleWords=title.toLowerCase().split(" ");
+pool=[...new Set([...pool,...titleWords])];
 
-if(!token||files.length===0){
-alert("Token ve dosyalar gerekli!");
+let result=[];
+while(result.length<45 && pool.length>0){
+const r=Math.floor(Math.random()*pool.length);
+result.push(pool[r]);
+pool.splice(r,1);
+}
+return result;
+}
+
+async function uploadVector(){
+
+const user=document.getElementById("github-user").value.trim();
+const repo=document.getElementById("github-repo").value.trim();
+const token=document.getElementById("github-token").value.trim();
+const image=document.getElementById("image-url").value.trim();
+const title=document.getElementById("title").value.trim();
+
+if(!user||!repo||!token||!image||!title){
+alert("All fields required");
 return;
 }
 
-document.getElementById('btn').disabled=true;
-log.innerHTML="<b>Islem basladi...</b>";
+const category=detectCategory(title);
+const keywords=generateKeywords(title,category);
 
-const jpegs=files.filter(f=>f.name.toLowerCase().endsWith('.jpg'));
-
-for(let jpg of jpegs){
-
-let base=jpg.name.replace(/\.[^/.]+$/,"");
-let clean=base.toLowerCase()
-.replace(/\s+/g,'-')
-.replace(/[()]/g,'')
-.replace(/[^a-z0-9-]/g,'')
-.replace(/-+/g,'-');
-
-let folder=`${clean}-${Math.floor(10000+Math.random()*90000)}`;
-
-const eps=files.find(f=>f.name.replace(/\.[^/.]+$/,"")===base && f.name.toLowerCase().endsWith('.eps'));
-if(!eps) continue;
-
-log.innerHTML+=`<div>Yukleniyor: ${folder}</div>`;
-
-try{
-
-await push(folder,jpg,`${folder}.jpg`,token);
-await push(folder,eps,`${folder}.eps`,token);
-
-/* CATEGORY DETECTION */
-
-let selectedCategory=null;
-
-for(let cat in catKeywords){
-if(clean.includes(cat)){
-selectedCategory=cat;
-break;
-}
-}
-
-/* KEYWORD GENERATION (45 UNIQUE) */
-
-let finalKeywords=new Set();
-
-if(selectedCategory){
-catKeywords[selectedCategory].split(",").forEach(k=>finalKeywords.add(k.trim()));
-}
-
-genericPool.forEach(k=>finalKeywords.add(k));
-
-let keywordArray=Array.from(finalKeywords);
-keywordArray=keywordArray.slice(0,45);
-
-const data={
-name:folder,
-desc:globalDesc || `Premium ${clean.replace(/-/g,' ')} vector illustration for professional design projects.`,
-keys:keywordArray.join(", ")
+const newVector={
+title:title,
+category:category,
+image:image,
+keywords:keywords
 };
 
-await update(data,token);
+const apiURL=`https://api.github.com/repos/${user}/${repo}/contents/admin.json`;
 
-log.innerHTML+=`<div style="color:#27ae60">BASARILI: ${folder}</div>`;
+let sha=null;
+let existingData={vectors:[]};
 
-}catch(e){
-log.innerHTML+=`<div style="color:red">HATA: ${e.message}</div>`;
+const getFile=await fetch(apiURL,{
+headers:{Authorization:`token ${token}`}
+});
+
+if(getFile.status===200){
+const fileData=await getFile.json();
+sha=fileData.sha;
+existingData=JSON.parse(atob(fileData.content));
+
+if(existingData.vectors.some(v=>v.title===title)){
+log("❌ Same title already exists!");
+return;
+}
 }
 
-}
+existingData.vectors.push(newVector);
 
-log.innerHTML+="<div><b>TUM ISLEMLER TAMAMLANDI</b></div>";
-document.getElementById('btn').disabled=false;
-}
+const updatedContent=btoa(JSON.stringify(existingData,null,2));
 
-/* =========================
-   GITHUB UPLOAD
-========================= */
-
-async function push(folder,file,name,token){
-
-const b64=await toBase64(file);
-
-const url=`https://api.github.com/repos/free-vector-stock/free-vector-stock/contents/vectors/${folder}/${name}`;
-
-const res=await fetch(url,{
-method:'PUT',
+const response=await fetch(apiURL,{
+method:"PUT",
 headers:{
-'Authorization':`token ${token}`,
-'Content-Type':'application/json'
+Authorization:`token ${token}`,
+"Content-Type":"application/json"
 },
 body:JSON.stringify({
-message:`Add ${name}`,
-content:b64.split(',')[1]
+message:"Add new vector",
+content:updatedContent,
+sha:sha
 })
 });
 
-if(!res.ok){
-const err=await res.json();
-throw new Error(err.message);
-}
-}
-
-/* =========================
-   UPDATE JSON
-========================= */
-
-async function update(newData,token){
-
-const url=`https://api.github.com/repos/free-vector-stock/free-vector-stock/contents/vectors.json`;
-
-const res=await fetch(url,{headers:{'Authorization':`token ${token}`}});
-
-if(!res.ok) throw new Error("vectors.json okunamadi");
-
-const file=await res.json();
-
-const decoded=decodeURIComponent(escape(atob(file.content.replace(/\n/g,''))));
-
-let list=[];
-try{ list=JSON.parse(decoded); } catch { list=[]; }
-
-list.unshift(newData);
-
-const updated=await fetch(url,{
-method:'PUT',
-headers:{
-'Authorization':`token ${token}`,
-'Content-Type':'application/json'
-},
-body:JSON.stringify({
-message:"Update vectors.json",
-content:btoa(unescape(encodeURIComponent(JSON.stringify(list,null,2)))),
-sha:file.sha
-})
-});
-
-if(!updated.ok){
-const err=await updated.json();
-throw new Error(err.message);
-}
+if(response.status===200||response.status===201){
+log("✅ Upload Successful!");
+}else{
+log("❌ Upload Failed!");
 }
 
-/* =========================
-   BASE64
-========================= */
-
-function toBase64(file){
-return new Promise((resolve,reject)=>{
-const reader=new FileReader();
-reader.readAsDataURL(file);
-reader.onload=()=>resolve(reader.result);
-reader.onerror=error=>reject(error);
-});
 }
 
 </script>
-
 </body>
 </html>
