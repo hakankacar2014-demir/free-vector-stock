@@ -2,50 +2,87 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bulk Upload Panel</title>
+    <title>SAFE AUTO-PILOT UPLOAD</title>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .box { background: #111; padding: 40px; border-radius: 20px; border: 2px solid #f39c12; width: 400px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 1px solid #333; background: #222; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; margin-top: 10px; }
-        .btn-up { background: #27ae60; color: #fff; }
+        body { background:#000; color:#fff; font-family: sans-serif; display:flex; justify-content:center; align-items:center; min-height:100vh; margin:0; }
+        .box { background:#111; padding:40px; border-radius:20px; border:2px solid #f39c12; width:450px; text-align:center; }
+        input { width:100%; padding:15px; margin:10px 0; border-radius:8px; border:1px solid #333; background:#1a1a1a; color:white; }
+        button { width:100%; padding:18px; background:#27ae60; color:#fff; border:none; border-radius:8px; font-weight:bold; cursor:pointer; }
+        #log { margin-top:20px; font-size:12px; color:#bbb; text-align:left; max-height:200px; overflow-y:auto; padding:10px; background:#050505; }
     </style>
 </head>
 <body>
     <div class="box">
-        <h2 style="color:#f39c12">BULK UPLOAD</h2>
+        <h2>SAFE AUTO-PILOT</h2>
         <input type="password" id="tk" placeholder="GitHub Token">
-        <input type="file" id="fl" multiple accept=".jpg,.eps">
-        <button class="btn-up" onclick="start()">START UPLOAD</button>
-        <div id="log" style="margin-top:20px; font-size:12px; color:#aaa;"></div>
+        <input type="file" id="fi" multiple accept=".jpg,.eps">
+        <button id="btn" onclick="startSafeUpload()">START SMART UPLOAD</button>
+        <div id="log">Ready to upload...</div>
     </div>
-    <script>
-        async function start() {
-            const tk = document.getElementById('tk').value;
-            const fls = Array.from(document.getElementById('fl').files);
-            const log = document.getElementById('log');
-            const jpgs = fls.filter(f => f.name.toLowerCase().endsWith('.jpg'));
-            for(let j of jpgs) {
-                const name = j.name.split('.')[0];
-                const folder = name.toLowerCase().replace(/\s+/g, '-');
-                const e = fls.find(f => f.name.split('.')[0] === name && f.name.toLowerCase().endsWith('.eps'));
-                if(e) {
-                    await up(j, folder, tk); await up(e, folder, tk);
-                    log.innerHTML += `Uploaded: ${folder}<br>`;
-                }
+
+<script>
+    async function startSafeUpload() {
+        const token = document.getElementById('tk').value;
+        const files = Array.from(document.getElementById('fi').files);
+        const log = document.getElementById('log');
+        const btn = document.getElementById('btn');
+
+        if(!token || files.length === 0) return alert("Required: Token and Files!");
+
+        btn.disabled = true; btn.innerText = "UPLOADING..."; log.innerHTML = "";
+
+        const jpegs = files.filter(f => f.name.toLowerCase().endsWith('.jpg'));
+        
+        for (let jpg of jpegs) {
+            let base = jpg.name.split('.')[0];
+            // Format cleaning
+            let cleanBase = base.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-');
+            
+            // Unique ID to prevent overwriting
+            let uniqueSafeName = `${cleanBase}-${Date.now().toString().slice(-5)}`;
+
+            const eps = files.find(f => f.name.split('.')[0] === base && f.name.toLowerCase().endsWith('.eps'));
+
+            if (eps) {
+                log.innerHTML += `<div>⚙️ Processing: ${uniqueSafeName}</div>`;
+                await uploadToGithub(uniqueSafeName, jpg, `${uniqueSafeName}.jpg`, token);
+                await uploadToGithub(uniqueSafeName, eps, `${uniqueSafeName}.eps`, token);
+                await updateJson(uniqueSafeName, token);
+                log.innerHTML += `<div style="color:green">✓ Successfully Uploaded!</div>`;
             }
+            log.scrollTop = log.scrollHeight;
         }
-        async function up(f, fld, tk) {
-            const r = new FileReader(); r.readAsDataURL(f);
-            return new Promise(res => { r.onload = async () => {
-                const c = r.result.split(',')[1];
-                const resp = await fetch(`https://api.github.com/repos/free-vector-stock/free-vector-stock/contents/vectors/${fld}/${f.name}`, {
-                    method: 'PUT', headers: { 'Authorization': `token ${tk}` },
-                    body: JSON.stringify({ message: `Add ${fld}`, content: c })
-                });
-                res(resp.ok);
-            };});
-        }
-    </script>
+        btn.disabled = false; btn.innerText = "START SMART UPLOAD";
+        alert("Success! All files are indexed uniquely.");
+    }
+
+    async function uploadToGithub(folder, file, newName, token) {
+        const content = await toBase64(file);
+        const url = `https://api.github.com/repos/free-vector-stock/free-vector-stock/contents/vectors/${folder}/${newName}`;
+        await fetch(url, {
+            method: 'PUT',
+            headers: { 'Authorization': `token ${token}` },
+            body: JSON.stringify({ message: `Safe Auto: ${newName}`, content: content.split(',')[1] })
+        });
+    }
+
+    async function updateJson(newName, token) {
+        const url = `https://api.github.com/repos/free-vector-stock/free-vector-stock/contents/vectors.json`;
+        const res = await fetch(url);
+        const data = await res.json();
+        let list = JSON.parse(atob(data.content));
+        list.push(newName);
+        await fetch(url, {
+            method: 'PUT',
+            headers: { 'Authorization': `token ${token}` },
+            body: JSON.stringify({ message: `Auto-Index: ${newName}`, content: btoa(JSON.stringify(list, null, 2)), sha: data.sha })
+        });
+    }
+
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader(); reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result); reader.onerror = e => reject(e);
+    });
+</script>
 </body>
 </html>
