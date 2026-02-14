@@ -3,184 +3,97 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FREE VECTOR STOCK | Free Vector Download</title>
-<meta name="description" content="Free vector download, EPS10 graphics, stock images and premium design resources.">
-<meta name="keywords" content="free vector download, eps10, stock images, free graphics">
-<meta name="robots" content="index, follow">
+<title>FREE VECTOR STOCK - Admin</title>
+
 <style>
-body{margin:0;font-family:Arial;background:#ffffff;color:#000}
-.topbar{background:black;color:white;padding:30px;text-align:center}
-.logo{font-size:28px;font-weight:bold}
-.lines{display:flex;justify-content:center;gap:10px;margin-top:15px}
-.line{width:50px;height:3px;background:white;cursor:pointer}
-.dynamic-text{margin-top:20px;font-size:14px;max-width:900px;margin:auto}
-.container{display:flex}
-.sidebar{width:260px;padding:20px;border-right:1px solid #eee;height:calc(100vh - 220px);overflow:auto}
-.sidebar div{padding:6px 0;cursor:pointer}
-.content{flex:1;padding:30px}
-.search-box input{width:100%;padding:12px;font-size:16px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:25px;margin-top:20px}
-.card{border:1px solid #eee;padding:15px}
-.card img{width:100%}
-button{background:black;color:white;padding:8px 14px;border:none;cursor:pointer}
-.ad{background:#f2f2f2;text-align:center;padding:60px;margin:30px 0;font-weight:bold}
-.footer{background:black;color:white;padding:25px;text-align:center}
+body{margin:0;font-family:Arial;background:#ffffff;}
+header{background:#000;color:#fff;text-align:center;padding:20px;font-size:24px;font-weight:bold;}
+.container{max-width:1200px;margin:auto;padding:30px;}
+input,button{width:100%;padding:12px;margin:10px 0;}
+button{background:#000;color:#fff;border:none;cursor:pointer;font-weight:bold;}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-<div class="logo">FREE VECTOR STOCK</div>
-<div class="lines">
-<div class="line" onclick="changeText(0)"></div>
-<div class="line" onclick="changeText(1)"></div>
-<div class="line" onclick="changeText(2)"></div>
-<div class="line" onclick="changeText(3)"></div>
-<div class="line" onclick="changeText(4)"></div>
-</div>
-<div class="dynamic-text" id="dynamicText">
-We operate our own in-house studio to produce graphic designs and offer them free of charge for both personal and commercial projects.
-</div>
-</div>
-
-<div class="ad">ADVERTISEMENT AREA 970x250</div>
+<header>FREE VECTOR STOCK - Admin Panel</header>
 
 <div class="container">
 
-<div class="sidebar" id="categoryList"></div>
+<h2>Bulk Upload (Minimum 50 Recommended)</h2>
 
-<div class="content">
+<label>Upload JPEG Files</label>
+<input type="file" id="jpegFiles" multiple accept=".jpg,.jpeg">
 
-<div class="search-box">
-<input type="text" placeholder="🔍 Search vectors..." onkeyup="searchAssets(this.value)">
-</div>
+<label>Upload EPS10 Files</label>
+<input type="file" id="epsFiles" multiple accept=".eps">
 
-<div class="grid" id="assetGrid"></div>
-
-<div class="ad">ADVERTISEMENT AREA 728x90</div>
+<button onclick="uploadFiles()">Process Upload</button>
 
 </div>
-</div>
 
-<div class="footer">
-<div>
-Visitors: <span id="visitorCount">0</span> | Downloads: <span id="downloadCount">0</span>
-</div>
-<div>
-© 2026 ® Registered Trademark |
-<a href="mailto:hakankacar2014@gmail.com" style="color:white;text-decoration:none;">Info</a>
-</div>
-</div>
-
-<!-- FIREBASE -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
 
 <script>
-
-const firebaseConfig = {
-apiKey: "YOUR_API_KEY",
-authDomain: "YOUR_PROJECT.firebaseapp.com",
-databaseURL: "https://YOUR_PROJECT.firebaseio.com",
-projectId: "YOUR_PROJECT",
-storageBucket: "YOUR_PROJECT.appspot.com",
-messagingSenderId: "XXXX",
-appId: "XXXX"
+const firebaseConfig={
+apiKey:"YOUR_KEY",
+authDomain:"YOUR_DOMAIN",
+projectId:"YOUR_PROJECT_ID"
 };
 
 firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+const db=firebase.firestore();
 
-const visitorRef = database.ref("visitors");
-const downloadRef = database.ref("downloads");
-
-visitorRef.transaction(current => (current || 0) + 1);
-
-visitorRef.on("value", snap=>{
-document.getElementById("visitorCount").innerText=snap.val();
-});
-
-downloadRef.on("value", snap=>{
-document.getElementById("downloadCount").innerText=snap.val();
-});
-
-function increaseDownload(){
-downloadRef.transaction(current => (current || 0) + 1);
+function cleanName(name){
+return name.toLowerCase().replace(/[^a-z0-9]/g,"-");
 }
 
-const texts=[
-"We operate our own in-house studio to produce graphic designs and offer them free of charge for both personal and commercial projects.",
-"Our goal is to provide a comprehensive and ideal platform for those seeking graphic resources.",
-"We aim to offer a wide archive of graphics, including vector illustrations, stock photos, icons, logos, and various design elements.",
-"Our only and absolute rule is that our files may not be redistributed in any way.",
-"The advertisements on our website generate revenue to enable us to continue our work. Therefore, we ask for your understanding."
+function detectCategory(name){
+const cats=[
+"abstract","animals","arts","backgrounds","beauty","buildings","business","celebrities",
+"education","food","healthcare","holidays","industrial","interiors","miscellaneous",
+"nature","objects","parks","people","religion","science","signs","sports",
+"technology","transportation","vintage"
 ];
-
-function changeText(i){
-document.getElementById("dynamicText").innerText=texts[i];
+for(let c of cats){if(name.includes(c)) return c;}
+return "miscellaneous";
 }
 
-const categories=[
-"Abstract","Animals/Wildlife","The Arts","Backgrounds/Textures","Beauty/Fashion",
-"Buildings/Landmarks","Business/Finance","Celebrities","Education","Food and Drink",
-"Healthcare/Medical","Holidays","Industrial","Interiors","Miscellaneous","Nature",
-"Objects","Parks/Outdoor","People","Religion","Science","Signs/Symbols",
-"Sports/Recreation","Technology","Transportation","Vintage"
-].sort();
+function generateTitle(base){
+return base.replace(/-/g," ").replace(/\b\w/g,l=>l.toUpperCase());
+}
 
-const catDiv=document.getElementById("categoryList");
-categories.forEach(cat=>{
-let el=document.createElement("div");
-el.innerText=cat;
-el.onclick=()=>filterCategory(cat);
-catDiv.appendChild(el);
-});
+function generateKeywords(base){
+let arr=base.split("-");
+while(arr.length<45){arr.push("vector");}
+return arr.slice(0,45);
+}
 
-let assets=JSON.parse(localStorage.getItem("fvs_assets"))||[];
+async function uploadFiles(){
+const jpegs=document.getElementById("jpegFiles").files;
+const eps=document.getElementById("epsFiles").files;
 
-function render(list){
-const grid=document.getElementById("assetGrid");
-grid.innerHTML="";
-list.forEach(asset=>{
-let card=document.createElement("div");
-card.className="card";
-card.innerHTML=`
-<img src="${asset.jpeg}" alt="${asset.title}">
-<h4>${asset.title}</h4>
-<p>${asset.keywords.join(", ")}</p>
-<button onclick="openDownload('${asset.jpeg}','${asset.eps}')">Download</button>
-`;
-grid.appendChild(card);
+if(jpegs.length===0||eps.length===0){
+alert("Upload both JPEG and EPS files.");
+return;
+}
+
+for(let i=0;i<jpegs.length;i++){
+let base=cleanName(jpegs[i].name.split(".")[0]);
+let category=detectCategory(base);
+
+await db.collection("vectors").add({
+title:generateTitle(base)+" "+Date.now(),
+category:category,
+jpeg:"images/"+jpegs[i].name,
+eps:"images/"+eps[i].name,
+keywords:generateKeywords(base),
+date:Date.now()
 });
 }
 
-function filterCategory(cat){
-render(assets.filter(a=>a.category===cat));
+alert("Upload Completed Successfully.");
 }
-
-function searchAssets(q){
-q=q.toLowerCase();
-render(assets.filter(a=>a.title.toLowerCase().includes(q)));
-}
-
-function openDownload(jpeg,eps){
-increaseDownload();
-let win=window.open("");
-win.document.write(`
-<html>
-<body style="font-family:Arial;text-align:center;background:white">
-<div style="background:#f2f2f2;padding:60px;margin:20px">ADVERTISEMENT AREA 970x250</div>
-<h2>Select Format</h2>
-<a href="${jpeg}" download><button>Download JPEG</button></a>
-<a href="${eps}" download><button>Download EPS10</button></a>
-<div style="background:#f2f2f2;padding:60px;margin:20px">ADVERTISEMENT AREA 728x90</div>
-</body>
-</html>
-`);
-}
-
-render(assets);
-
 </script>
 
 </body>
