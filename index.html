@@ -4,31 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FREE VECTOR STOCK | Free Vector Download</title>
-<meta name="description" content="Free vector download, EPS10 graphics, stock images, premium design resources for commercial and personal use.">
-<meta name="keywords" content="free vector download, eps10 download, stock images, free graphics">
+<meta name="description" content="Free vector download, EPS10 graphics, stock images and premium design resources.">
+<meta name="keywords" content="free vector download, eps10, stock images, free graphics">
 <meta name="robots" content="index, follow">
 <style>
 body{margin:0;font-family:Arial;background:#ffffff;color:#000}
 .topbar{background:black;color:white;padding:30px;text-align:center}
 .logo{font-size:28px;font-weight:bold}
-.lines{margin-top:15px;display:flex;justify-content:center;gap:10px}
+.lines{display:flex;justify-content:center;gap:10px;margin-top:15px}
 .line{width:50px;height:3px;background:white;cursor:pointer}
-.dynamic-text{margin-top:20px;font-size:14px;max-width:900px;margin-left:auto;margin-right:auto}
+.dynamic-text{margin-top:20px;font-size:14px;max-width:900px;margin:auto}
 .container{display:flex}
-.sidebar{width:260px;padding:20px;border-right:1px solid #eee;height:calc(100vh - 200px);overflow:auto}
-.sidebar div{padding:6px 0;cursor:pointer;font-size:14px}
+.sidebar{width:260px;padding:20px;border-right:1px solid #eee;height:calc(100vh - 220px);overflow:auto}
+.sidebar div{padding:6px 0;cursor:pointer}
 .content{flex:1;padding:30px}
-.search-box{margin-bottom:30px}
 .search-box input{width:100%;padding:12px;font-size:16px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:25px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:25px;margin-top:20px}
 .card{border:1px solid #eee;padding:15px}
 .card img{width:100%}
-.card h4{font-size:14px;margin:10px 0}
-.card p{font-size:12px;color:#666}
-button{padding:8px 15px;background:black;color:white;border:none;cursor:pointer}
+button{background:black;color:white;padding:8px 14px;border:none;cursor:pointer}
 .ad{background:#f2f2f2;text-align:center;padding:60px;margin:30px 0;font-weight:bold}
 .footer{background:black;color:white;padding:25px;text-align:center}
-.counter{margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -67,18 +63,52 @@ We operate our own in-house studio to produce graphic designs and offer them fre
 </div>
 
 <div class="footer">
-<div class="counter">
-Visitors: <span id="visitorCount"></span> | Downloads: <span id="downloadCount"></span>
+<div>
+Visitors: <span id="visitorCount">0</span> | Downloads: <span id="downloadCount">0</span>
 </div>
 <div>
-© 2026 ® Registered Trademark | 
+© 2026 ® Registered Trademark |
 <a href="mailto:hakankacar2014@gmail.com" style="color:white;text-decoration:none;">Info</a>
 </div>
 </div>
 
+<!-- FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js"></script>
+
 <script>
 
-const bannerTexts=[
+const firebaseConfig = {
+apiKey: "YOUR_API_KEY",
+authDomain: "YOUR_PROJECT.firebaseapp.com",
+databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+projectId: "YOUR_PROJECT",
+storageBucket: "YOUR_PROJECT.appspot.com",
+messagingSenderId: "XXXX",
+appId: "XXXX"
+};
+
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
+
+const visitorRef = database.ref("visitors");
+const downloadRef = database.ref("downloads");
+
+visitorRef.transaction(current => (current || 0) + 1);
+
+visitorRef.on("value", snap=>{
+document.getElementById("visitorCount").innerText=snap.val();
+});
+
+downloadRef.on("value", snap=>{
+document.getElementById("downloadCount").innerText=snap.val();
+});
+
+function increaseDownload(){
+downloadRef.transaction(current => (current || 0) + 1);
+}
+
+const texts=[
 "We operate our own in-house studio to produce graphic designs and offer them free of charge for both personal and commercial projects.",
 "Our goal is to provide a comprehensive and ideal platform for those seeking graphic resources.",
 "We aim to offer a wide archive of graphics, including vector illustrations, stock photos, icons, logos, and various design elements.",
@@ -87,16 +117,8 @@ const bannerTexts=[
 ];
 
 function changeText(i){
-document.getElementById("dynamicText").innerText=bannerTexts[i];
+document.getElementById("dynamicText").innerText=texts[i];
 }
-
-let visitors=localStorage.getItem("fvs_visitors")||0;
-visitors++;
-localStorage.setItem("fvs_visitors",visitors);
-document.getElementById("visitorCount").innerText=visitors;
-
-let downloads=localStorage.getItem("fvs_downloads")||0;
-document.getElementById("downloadCount").innerText=downloads;
 
 const categories=[
 "Abstract","Animals/Wildlife","The Arts","Backgrounds/Textures","Beauty/Fashion",
@@ -126,7 +148,7 @@ card.innerHTML=`
 <img src="${asset.jpeg}" alt="${asset.title}">
 <h4>${asset.title}</h4>
 <p>${asset.keywords.join(", ")}</p>
-<button onclick="downloadAsset('${asset.jpeg}','${asset.eps}')">Download</button>
+<button onclick="openDownload('${asset.jpeg}','${asset.eps}')">Download</button>
 `;
 grid.appendChild(card);
 });
@@ -141,22 +163,17 @@ q=q.toLowerCase();
 render(assets.filter(a=>a.title.toLowerCase().includes(q)));
 }
 
-function downloadAsset(jpeg,eps){
-let downloads=localStorage.getItem("fvs_downloads")||0;
-downloads++;
-localStorage.setItem("fvs_downloads",downloads);
-document.getElementById("downloadCount").innerText=downloads;
-
+function openDownload(jpeg,eps){
+increaseDownload();
 let win=window.open("");
 win.document.write(`
 <html>
-<head><title>Download File</title></head>
 <body style="font-family:Arial;text-align:center;background:white">
-<div style="background:#f2f2f2;padding:40px;margin:20px">ADVERTISEMENT AREA 970x250</div>
+<div style="background:#f2f2f2;padding:60px;margin:20px">ADVERTISEMENT AREA 970x250</div>
 <h2>Select Format</h2>
 <a href="${jpeg}" download><button>Download JPEG</button></a>
 <a href="${eps}" download><button>Download EPS10</button></a>
-<div style="background:#f2f2f2;padding:40px;margin:20px">ADVERTISEMENT AREA 728x90</div>
+<div style="background:#f2f2f2;padding:60px;margin:20px">ADVERTISEMENT AREA 728x90</div>
 </body>
 </html>
 `);
