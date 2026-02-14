@@ -1,145 +1,148 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FREE VECTOR STOCK</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+<title>Free Vector Download | Premium Graphic Resources</title>
+<meta name="description" content="Free vector download, stock images, EPS10 files, premium design resources for commercial and personal use.">
+<meta name="keywords" content="free vector download, stock images, eps10, graphic design resources">
 <style>
-body{margin:0;font-family:'Inter',sans-serif;background:#0d0d0d;color:#fff;}
-header{background:#111;padding:30px;text-align:center;}
-header a{color:#fff;text-decoration:none;}
-header a:hover{color:#f39c12;}
-.container{display:flex;}
-.sidebar{width:240px;background:#111;padding:20px;}
-.sidebar ul{list-style:none;padding:0;}
-.sidebar li{padding:8px;color:#ccc;cursor:pointer;}
-.sidebar li:hover{color:#f39c12;}
-.content{flex:1;padding:20px;}
-.search input{width:100%;padding:12px;border-radius:30px;border:2px solid #333;background:#111;color:#fff;}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px;margin-top:20px;}
-.card{background:#111;padding:10px;border-radius:10px;cursor:pointer;transition:0.3s;}
-.card:hover{transform:scale(1.05);}
-.card img{width:100%;border-radius:8px;}
-.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);justify-content:center;align-items:center;}
-.modal-content{background:#111;padding:20px;border-radius:10px;max-width:500px;width:90%;}
-.close{float:right;color:#f39c12;cursor:pointer;}
+body{margin:0;font-family:Arial;background:white;color:#000}
+.topbar{background:black;color:white;padding:20px;text-align:center}
+.logo{font-size:26px;font-weight:bold}
+.lines{margin-top:10px;display:flex;justify-content:center;gap:10px}
+.line{width:40px;height:3px;background:white;cursor:pointer}
+.dynamic-text{margin-top:15px;font-size:14px;max-width:800px;margin-left:auto;margin-right:auto}
+.container{display:flex}
+.sidebar{width:250px;padding:20px;border-right:1px solid #ddd;height:100vh;overflow:auto}
+.sidebar div{padding:5px 0;cursor:pointer}
+.content{flex:1;padding:20px}
+.search{margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px}
+.card{border:1px solid #eee;padding:10px}
+.card img{width:100%}
+.ad{background:#eee;text-align:center;padding:40px;margin:20px 0}
+.footer{background:black;color:white;padding:20px;text-align:center}
 </style>
 </head>
 <body>
 
-<header>
-<h1><a href="index.html">FREE VECTOR STOCK</a></h1>
-</header>
+<div class="topbar">
+<div class="logo">FREE GRAPHIC STUDIO</div>
+
+<div class="lines">
+<div class="line" onclick="changeText(0)"></div>
+<div class="line" onclick="changeText(1)"></div>
+<div class="line" onclick="changeText(2)"></div>
+<div class="line" onclick="changeText(3)"></div>
+<div class="line" onclick="changeText(4)"></div>
+</div>
+
+<div class="dynamic-text" id="dynamicText">
+We operate our own in-house studio to produce graphic designs and offer them free of charge for both personal and commercial projects.
+</div>
+</div>
+
+<div class="ad">ADVERTISEMENT AREA</div>
 
 <div class="container">
 
-<aside class="sidebar">
-<h3>CATEGORIES</h3>
-<ul id="category-list"></ul>
-</aside>
+<div class="sidebar" id="categories"></div>
 
-<main class="content">
+<div class="content">
 
 <div class="search">
-<input type="text" id="search-input" placeholder="Search vectors...">
+<input type="text" placeholder="🔍 Search..." onkeyup="searchAssets(this.value)">
 </div>
 
-<div id="vector-grid" class="grid"></div>
-<div id="no-results" style="display:none;text-align:center;margin-top:40px;color:#777;">
-No vectors found.
+<div class="grid" id="assetGrid"></div>
+
+<div class="ad">ADVERTISEMENT AREA</div>
+
+</div>
 </div>
 
-</main>
-</div>
-
-<div id="detail-modal" class="modal">
-<div class="modal-content">
-<span class="close" onclick="closeModal()">X</span>
-<div id="modal-body"></div>
-</div>
+<div class="footer">
+<div>Visitors: <span id="visitors"></span> | Downloads: <span id="downloads"></span></div>
+<div>© 2026 ® Registered Trademark | <a href="mailto:hakankacar2014@gmail.com" style="color:white">Info</a></div>
 </div>
 
 <script>
 
-const DATA_URL="admin.json";
-let allVectors=[];
-let currentCategory=null;
+const texts=[
+"We operate our own in-house studio to produce graphic designs and offer them free of charge for both personal and commercial projects.",
+"Our goal is to provide a comprehensive and ideal platform for those seeking graphic resources.",
+"We aim to offer a wide archive of graphics, including vector illustrations, stock photos, icons, logos, and various design elements.",
+"Our only and absolute rule is that our files may not be redistributed in any way.",
+"The advertisements on our website generate revenue to enable us to continue our work. Therefore, we ask for your understanding."
+];
 
-fetch(DATA_URL)
-.then(res=>res.json())
-.then(data=>{
-allVectors=data.vectors||[];
-loadCategories();
-renderVectors(allVectors);
-});
-
-function loadCategories(){
-const list=document.getElementById("category-list");
-list.innerHTML="";
-
-const cats=[...new Set(allVectors.map(v=>v.category))];
-
-const all=document.createElement("li");
-all.textContent="All";
-all.onclick=()=>{currentCategory=null;renderVectors(allVectors);};
-list.appendChild(all);
-
-cats.forEach(cat=>{
-const li=document.createElement("li");
-li.textContent=cat;
-li.onclick=()=>{
-currentCategory=cat;
-renderVectors(allVectors.filter(v=>v.category===cat));
-};
-list.appendChild(li);
-});
+function changeText(i){
+document.getElementById("dynamicText").innerText=texts[i];
 }
 
-function renderVectors(vectors){
-const grid=document.getElementById("vector-grid");
-const no=document.getElementById("no-results");
-grid.innerHTML="";
-if(vectors.length===0){no.style.display="block";return;}
-no.style.display="none";
+let visitors = localStorage.getItem("visitors");
+if(!visitors){visitors=0}
+visitors++;
+localStorage.setItem("visitors",visitors);
+document.getElementById("visitors").innerText=visitors;
 
-vectors.forEach(v=>{
-const card=document.createElement("div");
+let downloads = localStorage.getItem("downloads");
+if(!downloads){downloads=0}
+document.getElementById("downloads").innerText=downloads;
+
+const categories=[
+"Abstract","Animals/Wildlife","The Arts","Backgrounds/Textures","Beauty/Fashion",
+"Buildings/Landmarks","Business/Finance","Celebrities","Education","Food and Drink",
+"Healthcare/Medical","Holidays","Industrial","Interiors","Miscellaneous","Nature",
+"Objects","Parks/Outdoor","People","Religion","Science","Signs/Symbols",
+"Sports/Recreation","Technology","Transportation","Vintage"
+].sort();
+
+const categoryDiv=document.getElementById("categories");
+categories.forEach(cat=>{
+let div=document.createElement("div");
+div.innerText=cat;
+div.onclick=()=>filterCategory(cat);
+categoryDiv.appendChild(div);
+});
+
+let assets = JSON.parse(localStorage.getItem("assetsData")) || [];
+
+function renderAssets(list){
+const grid=document.getElementById("assetGrid");
+grid.innerHTML="";
+list.forEach(asset=>{
+let card=document.createElement("div");
 card.className="card";
 card.innerHTML=`
-<img src="${v.image}">
-<h4>${v.title}</h4>
+<img src="${asset.jpeg}">
+<h4>${asset.title}</h4>
+<p>${asset.keywords.slice(0,5).join(", ")}</p>
+<button onclick="downloadFile()">Download</button>
 `;
-card.onclick=()=>openModal(v);
 grid.appendChild(card);
 });
 }
 
-function openModal(v){
-document.getElementById("modal-body").innerHTML=`
-<h2>${v.title}</h2>
-<img src="${v.image}" style="width:100%;border-radius:10px;">
-<p><strong>Category:</strong> ${v.category}</p>
-<p><strong>Keywords:</strong> ${v.keywords.join(", ")}</p>
-`;
-document.getElementById("detail-modal").style.display="flex";
+function filterCategory(cat){
+renderAssets(assets.filter(a=>a.category===cat));
 }
 
-function closeModal(){
-document.getElementById("detail-modal").style.display="none";
+function searchAssets(q){
+q=q.toLowerCase();
+renderAssets(assets.filter(a=>a.title.toLowerCase().includes(q)));
 }
 
-document.getElementById("search-input").addEventListener("input",function(){
-const q=this.value.toLowerCase();
-let filtered=allVectors.filter(v=>
-v.title.toLowerCase().includes(q)||
-v.keywords.join(" ").toLowerCase().includes(q)
-);
-if(currentCategory){
-filtered=filtered.filter(v=>v.category===currentCategory);
+function downloadFile(){
+let downloads = localStorage.getItem("downloads");
+downloads++;
+localStorage.setItem("downloads",downloads);
+document.getElementById("downloads").innerText=downloads;
+alert("Download page with ads would open here.");
 }
-renderVectors(filtered);
-});
+
+renderAssets(assets);
 
 </script>
 
